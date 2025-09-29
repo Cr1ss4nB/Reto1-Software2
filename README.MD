@@ -2,8 +2,8 @@
 
 ---
 
-Cristian Andrés Basto Largo 
-Andrea Katherine Bello Sotelo
-Laura Vanessa Figueredo Martinez
+- -Cristian Andrés Basto Largo 
+- Andrea Katherine Bello Sotelo
+- Laura Vanessa Figueredo Martinez
 
 ---
