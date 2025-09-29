@@ -2,7 +2,9 @@ package co.edu.uptc.loginmicroservice.service;
 
 import co.edu.uptc.loginmicroservice.domain.User;
 import co.edu.uptc.loginmicroservice.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class UserService {
     private final UserRepository userRepository;
 
