@@ -167,9 +167,23 @@ const Login = () => {
                 setMessage('❌ No se puede conectar al servidor');
               }
             }}
-            style={{ fontSize: '12px', padding: '5px 10px' }}
+            style={{ fontSize: '12px', padding: '5px 10px', marginRight: '10px' }}
           >
             Probar Conexión
+          </button>
+          
+          <button 
+            type="button" 
+            className="btn btn-secondary"
+            onClick={() => {
+              const token = localStorage.getItem('token');
+              const customerId = localStorage.getItem('customerId');
+              console.log('Debug localStorage:', { token: !!token, customerId, tokenLength: token?.length });
+              setMessage(`Debug: Token=${!!token}, CustomerId=${customerId}, TokenLength=${token?.length || 0}`);
+            }}
+            style={{ fontSize: '12px', padding: '5px 10px' }}
+          >
+            Debug localStorage
           </button>
         </div>
       </div>
