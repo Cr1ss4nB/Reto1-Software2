@@ -13,8 +13,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('Dashboard mounted, checking services...');
-    checkServices();
+    console.log('Dashboard mounted, skipping service check for now...');
+    // checkServices(); // Deshabilitado temporalmente
+    setLoading(false);
   }, []);
 
   const checkServices = async () => {
