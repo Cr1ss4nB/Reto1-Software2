@@ -19,10 +19,16 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Verificar si hay un token almacenado al cargar la aplicación
     const token = localStorage.getItem('token');
+    const customerId = localStorage.getItem('customerId');
+    console.log('AuthContext useEffect - Checking stored auth:', { token: !!token, customerId });
+    
     if (token) {
       apiService.setAuthToken(token);
       setIsAuthenticated(true);
-      setUser({ customerId: localStorage.getItem('customerId') });
+      setUser({ customerId });
+      console.log('AuthContext useEffect - User authenticated from storage');
+    } else {
+      console.log('AuthContext useEffect - No token found, user not authenticated');
     }
     setLoading(false);
   }, []);
@@ -43,8 +49,10 @@ export const AuthProvider = ({ children }) => {
           apiService.setAuthToken(token);
           setIsAuthenticated(true);
           setUser({ customerId });
+          console.log('AuthContext login - User authenticated:', { customerId, isAuthenticated: true });
           return { success: true };
         } else {
+          console.log('AuthContext login - No token received from server');
           return { success: false, message: 'Token no recibido del servidor' };
         }
       } else {
