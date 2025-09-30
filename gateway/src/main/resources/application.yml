@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+          routes:
+            - id: login-service
+              uri: lb://login-microservice
+              predicates:
+                - Path=/login/**
+            - id: user-service
+              uri: lb://user-microservice
+              predicates:
+                - Path=/user/**
+            - id: order-service
+              uri: lb://order-microservice
+              predicates:
+                - Path=/order/**
+  security:
+    user:
+      name: admin
+      password: admin
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: "UnaClaveSuperSecretaLargaParaFirmarTokensJWT123456789012345678901234567890"
