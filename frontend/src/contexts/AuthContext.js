@@ -27,8 +27,6 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setUser({ customerId });
       console.log('AuthContext useEffect - User authenticated from storage');
-    } else {
-      console.log('AuthContext useEffect - No token found, user not authenticated');
     }
     setLoading(false);
   }, []);
