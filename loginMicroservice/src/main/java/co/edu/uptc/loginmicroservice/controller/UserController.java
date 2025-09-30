@@ -28,7 +28,7 @@ public class UserController {
     @PostMapping("/createuser")
     public ResponseEntity<Void> createUser(@RequestBody LoginRequest request) {
         User user = new User();
-        user.setCustomerId(request.getCustomerid());
+        user.setCustomerId(request.getCustomerId());
         user.setPassword(request.getPassword());
         userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -36,12 +36,12 @@ public class UserController {
 
     @PostMapping("/authuser")
     public ResponseEntity<Map<String,Object>> authUser(@RequestBody LoginRequest request) {
-        boolean valid = userService.authenticateUser(request.getCustomerid(), request.getPassword());
+        boolean valid = userService.authenticateUser(request.getCustomerId(), request.getPassword());
         Map<String,Object> response = new HashMap<>();
         response.put("userCreated", valid);
         
         if (valid) {
-            String token = jwtUtil.generateToken(request.getCustomerid());
+            String token = jwtUtil.generateToken(request.getCustomerId());
             response.put("token", token);
             return ResponseEntity.ok(response);
         } else {
