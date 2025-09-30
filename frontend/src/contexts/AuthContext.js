@@ -30,22 +30,42 @@ export const AuthProvider = ({ children }) => {
   const login = async (customerId, password) => {
     try {
       const response = await apiService.login(customerId, password);
-      if (response.data.userCreated) {
+      console.log('Login response:', response.data);
+      
+      if (response.data && response.data.userCreated) {
         const token = response.data.token;
-        localStorage.setItem('token', token);
-        localStorage.setItem('customerId', customerId);
-        apiService.setAuthToken(token);
-        setIsAuthenticated(true);
-        setUser({ customerId });
-        return { success: true };
+        if (token) {
+          localStorage.setItem('token', token);
+          localStorage.setItem('customerId', customerId);
+          apiService.setAuthToken(token);
+          setIsAuthenticated(true);
+          setUser({ customerId });
+          return { success: true };
+        } else {
+          return { success: false, message: 'Token no recibido del servidor' };
+        }
       } else {
         return { success: false, message: 'Credenciales inválidas' };
       }
     } catch (error) {
       console.error('Error en login:', error);
+      let errorMessage = 'Error de conexión';
+      
+      if (error.response) {
+        if (error.response.status === 401) {
+          errorMessage = 'Credenciales inválidas';
+        } else if (error.response.status === 500) {
+          errorMessage = 'Error del servidor. Intente más tarde.';
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Error de conexión' 
+        message: errorMessage
       };
     }
   };
