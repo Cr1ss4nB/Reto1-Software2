@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import apiService from '../services/apiService';
 
 const AuthContext = createContext();
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (customerId, password) => {
+  const login = useCallback(async (customerId, password) => {
     try {
       const response = await apiService.login(customerId, password);
       console.log('Login response:', response);
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
         message: errorMessage
       };
     }
-  };
+  }, []);
 
   const register = async (customerId, password) => {
     try {
@@ -100,14 +100,14 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const value = {
+  const value = useMemo(() => ({
     isAuthenticated,
     user,
     loading,
     login,
     register,
     logout
-  };
+  }), [isAuthenticated, user, loading, login, register, logout]);
 
   // Log state changes
   console.log('AuthContext render - isAuthenticated:', isAuthenticated, 'user:', user, 'loading:', loading);
