@@ -39,9 +39,10 @@ public class UserController {
         boolean valid = userService.authenticateUser(request.getCustomerId(), request.getPassword());
         Map<String,Object> response = new HashMap<>();
         response.put("userCreated", valid);
-        response.put("customerId", request.getCustomerId());
         
         if (valid) {
+            String token = jwtUtil.generateToken(request.getCustomerId());
+            response.put("token", token);
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
