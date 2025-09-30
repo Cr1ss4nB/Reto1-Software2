@@ -81,13 +81,31 @@ const apiService = {
   // Verificar estado de servicios
   checkServiceHealth: async () => {
     const services = {
-      gateway: true,  // Asumir que está funcionando
-      login: true,    // Asumir que está funcionando
-      user: false,    // No existe aún
-      order: false    // No existe aún
+      gateway: false,
+      login: false,
+      user: false,
+      order: false
     };
 
-    console.log('Servicios verificados - Gateway y Login asumidos como online');
+    try {
+      // Verificar Gateway - intentar hacer login (debería devolver 401 si está funcionando)
+      const gatewayResponse = await api.post('/login/authuser', { 
+        customerId: 'healthcheck', 
+        password: 'healthcheck' 
+      });
+      services.gateway = true;
+      services.login = true; // Si el gateway responde, el login service también está funcionando
+    } catch (error) {
+      // Si devuelve 401, significa que está funcionando pero las credenciales son inválidas
+      if (error.response?.status === 401) {
+        services.gateway = true;
+        services.login = true;
+        console.log('Servicios verificados - Gateway y Login funcionando (401 = credenciales inválidas)');
+      } else {
+        console.log('Error verificando servicios:', error.message);
+      }
+    }
+
     return services;
   }
 };
