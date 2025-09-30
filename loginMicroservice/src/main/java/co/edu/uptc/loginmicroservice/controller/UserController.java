@@ -26,23 +26,26 @@ public class UserController {
     }
 
     @PostMapping("/createuser")
-    public ResponseEntity<String> createUser(@RequestBody User user) {
+    public ResponseEntity<Void> createUser(@RequestBody LoginRequest request) {
+        User user = new User();
+        user.setCustomerId(request.getCustomerid());
+        user.setPassword(request.getPassword());
         userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario creado exitosamente");
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/authuser")
     public ResponseEntity<Map<String,Object>> authUser(@RequestBody LoginRequest request) {
-        boolean valid= userService.authenticateUser(request.getCustomerId(), request.getPassword());
+        boolean valid = userService.authenticateUser(request.getCustomerid(), request.getPassword());
         Map<String,Object> response = new HashMap<>();
+        response.put("userCreated", valid);
+        
         if (valid) {
-           String token = jwtUtil.generateToken(request.getCustomerId());
-           response.put("autenticated", true);
-           response.put("token", token);
-        }else {
-            response.put("autenticated", false);
-            response.put("message", "Credenciales inválidas");
+            String token = jwtUtil.generateToken(request.getCustomerid());
+            response.put("token", token);
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 }
