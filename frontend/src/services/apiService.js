@@ -88,19 +88,31 @@ const apiService = {
     };
 
     try {
-      // Verificar gateway
-      await api.get('/actuator/health');
+      // Verificar gateway - usar endpoint que existe
+      await api.get('/login/authuser', {
+        data: { customerId: 'test', password: 'test' }
+      });
       services.gateway = true;
     } catch (error) {
-      console.log('Gateway no disponible');
+      // Si devuelve 401, el gateway está funcionando pero las credenciales son inválidas
+      if (error.response?.status === 401) {
+        services.gateway = true;
+      } else {
+        console.log('Gateway no disponible:', error.message);
+      }
     }
 
     try {
-      // Verificar login service
-      await api.get('/login/health');
+      // Verificar login service - hacer una petición de prueba
+      await api.post('/login/authuser', { customerId: 'test', password: 'test' });
       services.login = true;
     } catch (error) {
-      console.log('Login service no disponible');
+      // Si devuelve 401, el servicio está funcionando pero las credenciales son inválidas
+      if (error.response?.status === 401) {
+        services.login = true;
+      } else {
+        console.log('Login service no disponible:', error.message);
+      }
     }
 
     return services;
