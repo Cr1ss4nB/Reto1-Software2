@@ -88,31 +88,35 @@ const apiService = {
     };
 
     try {
-      // Verificar gateway - usar endpoint que existe
-      await api.get('/login/authuser', {
-        data: { customerId: 'test', password: 'test' }
+      // Verificar gateway - hacer una petición simple
+      const response = await fetch('http://localhost:8080/login/authuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: 'test', password: 'test' })
       });
+      
+      // Si responde (cualquier status), el gateway está funcionando
       services.gateway = true;
+      console.log('Gateway verificado - Status:', response.status);
     } catch (error) {
-      // Si devuelve 401, el gateway está funcionando pero las credenciales son inválidas
-      if (error.response?.status === 401) {
-        services.gateway = true;
-      } else {
-        console.log('Gateway no disponible:', error.message);
-      }
+      console.log('Gateway no disponible:', error.message);
+      services.gateway = false;
     }
 
     try {
-      // Verificar login service - hacer una petición de prueba
-      await api.post('/login/authuser', { customerId: 'test', password: 'test' });
+      // Verificar login service - hacer una petición directa
+      const response = await fetch('http://localhost:8081/login/authuser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId: 'test', password: 'test' })
+      });
+      
+      // Si responde (cualquier status), el servicio está funcionando
       services.login = true;
+      console.log('Login service verificado - Status:', response.status);
     } catch (error) {
-      // Si devuelve 401, el servicio está funcionando pero las credenciales son inválidas
-      if (error.response?.status === 401) {
-        services.login = true;
-      } else {
-        console.log('Login service no disponible:', error.message);
-      }
+      console.log('Login service no disponible:', error.message);
+      services.login = false;
     }
 
     return services;
