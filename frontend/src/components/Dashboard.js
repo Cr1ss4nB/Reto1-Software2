@@ -13,18 +13,22 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Dashboard mounted, checking services...');
     checkServices();
   }, []);
 
   const checkServices = async () => {
+    console.log('Dashboard - Starting service health check...');
     setLoading(true);
     try {
       const serviceStatus = await apiService.checkServiceHealth();
+      console.log('Dashboard - Service status received:', serviceStatus);
       setServices(serviceStatus);
     } catch (error) {
-      console.error('Error verificando servicios:', error);
+      console.error('Dashboard - Error verificando servicios:', error);
     } finally {
       setLoading(false);
+      console.log('Dashboard - Service health check completed');
     }
   };
 

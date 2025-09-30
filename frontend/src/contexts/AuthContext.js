@@ -109,6 +109,9 @@ export const AuthProvider = ({ children }) => {
     logout
   };
 
+  // Log state changes
+  console.log('AuthContext render - isAuthenticated:', isAuthenticated, 'user:', user, 'loading:', loading);
+
   return (
     <AuthContext.Provider value={value}>
       {children}
