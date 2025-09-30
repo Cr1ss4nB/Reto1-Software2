@@ -25,7 +25,10 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         String path = request.getPath().value();
         
         // Permitir rutas de login y eureka sin autenticación
-        if (path.startsWith("/login/") || path.startsWith("/eureka/")) {
+        if (path.startsWith("/login/") || 
+            path.startsWith("/eureka/") || 
+            path.equals("/login/authuser") || 
+            path.equals("/login/createuser")) {
             return chain.filter(exchange);
         }
 
