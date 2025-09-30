@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/apiService';
 
 const AuthContext = createContext();
@@ -12,17 +12,26 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    // Inicializar estado basado en localStorage
+    const token = localStorage.getItem('token');
+    const customerId = localStorage.getItem('customerId');
+    console.log('AuthContext initial state - token:', !!token, 'customerId:', customerId);
+    return !!token;
+  });
+  const [user, setUser] = useState(() => {
+    const customerId = localStorage.getItem('customerId');
+    return customerId ? { customerId } : null;
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Verificar si hay un token almacenado al cargar la aplicación
+    // Solo verificar una vez al montar
     const token = localStorage.getItem('token');
     const customerId = localStorage.getItem('customerId');
     console.log('AuthContext useEffect - Checking stored auth:', { token: !!token, customerId });
     
-    if (token) {
+    if (token && customerId) {
       apiService.setAuthToken(token);
       setIsAuthenticated(true);
       setUser({ customerId });
@@ -31,53 +40,41 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = useCallback(async (customerId, password) => {
+  const login = async (customerId, password) => {
     try {
+      console.log('LOGIN START - customerId:', customerId);
       const response = await apiService.login(customerId, password);
-      console.log('Login response:', response);
-      console.log('Login response data:', response.data);
-      console.log('Login response status:', response.status);
+      console.log('LOGIN RESPONSE:', response.data);
       
-      if (response.data && response.data.userCreated) {
+      if (response.data && response.data.userCreated && response.data.token) {
         const token = response.data.token;
-        console.log('Token received:', token);
-        if (token) {
-          localStorage.setItem('token', token);
-          localStorage.setItem('customerId', customerId);
-          apiService.setAuthToken(token);
-          setIsAuthenticated(true);
-          setUser({ customerId });
-          console.log('AuthContext login - User authenticated:', { customerId, isAuthenticated: true });
-          return { success: true };
-        } else {
-          console.log('AuthContext login - No token received from server');
-          return { success: false, message: 'Token no recibido del servidor' };
-        }
+        console.log('LOGIN SUCCESS - Setting auth state');
+        
+        // Guardar en localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('customerId', customerId);
+        
+        // Configurar API service
+        apiService.setAuthToken(token);
+        
+        // Establecer estado
+        setIsAuthenticated(true);
+        setUser({ customerId });
+        
+        console.log('LOGIN COMPLETE - isAuthenticated:', true, 'user:', { customerId });
+        return { success: true };
       } else {
+        console.log('LOGIN FAILED - Invalid response');
         return { success: false, message: 'Credenciales inválidas' };
       }
     } catch (error) {
-      console.error('Error en login:', error);
-      let errorMessage = 'Error de conexión';
-      
-      if (error.response) {
-        if (error.response.status === 401) {
-          errorMessage = 'Credenciales inválidas';
-        } else if (error.response.status === 500) {
-          errorMessage = 'Error del servidor. Intente más tarde.';
-        } else if (error.response.data && error.response.data.message) {
-          errorMessage = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
+      console.error('LOGIN ERROR:', error);
       return { 
         success: false, 
-        message: errorMessage
+        message: error.response?.data?.message || 'Error de conexión'
       };
     }
-  }, []);
+  };
 
   const register = async (customerId, password) => {
     try {
@@ -100,17 +97,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const value = useMemo(() => ({
+  const value = {
     isAuthenticated,
     user,
     loading,
     login,
     register,
     logout
-  }), [isAuthenticated, user, loading, login, register, logout]);
+  };
 
-  // Log state changes
-  console.log('AuthContext render - isAuthenticated:', isAuthenticated, 'user:', user, 'loading:', loading);
+  console.log('AuthContext RENDER - isAuthenticated:', isAuthenticated, 'user:', user, 'loading:', loading);
 
   return (
     <AuthContext.Provider value={value}>
