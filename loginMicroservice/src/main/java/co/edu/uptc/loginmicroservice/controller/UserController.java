@@ -4,6 +4,8 @@ import co.edu.uptc.loginmicroservice.config.JwtUtil;
 import co.edu.uptc.loginmicroservice.domain.User;
 import co.edu.uptc.loginmicroservice.dto.LoginRequest;
 import co.edu.uptc.loginmicroservice.service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +26,13 @@ public class UserController {
     }
 
     @PostMapping("/createuser")
-    public String createUser(@RequestBody User user) {
+    public ResponseEntity<String> createUser(@RequestBody User user) {
         userService.createUser(user);
-        return "Usuario creado exitosamente";
+        return ResponseEntity.status(HttpStatus.CREATED).body("Usuario creado exitosamente");
     }
 
     @PostMapping("/authuser")
-    public Map<String,Object> authUser(@RequestBody LoginRequest request) {
+    public ResponseEntity<Map<String,Object>> authUser(@RequestBody LoginRequest request) {
         boolean valid= userService.authenticateUser(request.getCustomerId(), request.getPassword());
         Map<String,Object> response = new HashMap<>();
         if (valid) {
@@ -41,6 +43,6 @@ public class UserController {
             response.put("autenticated", false);
             response.put("message", "Credenciales inválidas");
         }
-        return response;
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 }
