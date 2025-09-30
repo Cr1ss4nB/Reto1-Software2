@@ -14,7 +14,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .anyRequest().permitAll()); // Permitir todas las rutas ya que JWT está centralizado en el Gateway
+                        .anyRequest().permitAll());
         return http.build();
     }
 }

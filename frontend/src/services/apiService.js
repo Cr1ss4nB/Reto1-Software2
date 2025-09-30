@@ -12,14 +12,6 @@ const api = axios.create({
 // Interceptor para agregar el token a las peticiones
 api.interceptors.request.use(
   (config) => {
-    console.log('Making request:', {
-      url: config.url,
-      method: config.method,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`,
-      headers: config.headers
-    });
-    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -27,31 +19,14 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para manejar respuestas de error
 api.interceptors.response.use(
-  (response) => {
-    console.log('Response received:', response);
-    return response;
-  },
+  (response) => response,
   (error) => {
-    console.error('API Error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
-      }
-    });
-    
     if (error.response?.status === 401) {
       // Token expirado o inválido
       localStorage.removeItem('token');

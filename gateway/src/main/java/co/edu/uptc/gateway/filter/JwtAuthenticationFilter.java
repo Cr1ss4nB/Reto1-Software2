@@ -23,14 +23,12 @@ public class JwtAuthenticationFilter implements GlobalFilter {
         ServerHttpResponse response = exchange.getResponse();
 
         String path = request.getPath().value();
-        System.out.println("Gateway Filter - Processing path: " + path);
         
         // Permitir rutas de login y eureka sin autenticación
         if (path.startsWith("/login/") || 
             path.startsWith("/eureka/") || 
             path.equals("/login/authuser") || 
             path.equals("/login/createuser")) {
-            System.out.println("Gateway Filter - Allowing path without authentication: " + path);
             return chain.filter(exchange);
         }
 

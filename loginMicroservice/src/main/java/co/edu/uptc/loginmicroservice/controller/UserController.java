@@ -36,20 +36,14 @@ public class UserController {
 
     @PostMapping("/authuser")
     public ResponseEntity<Map<String,Object>> authUser(@RequestBody LoginRequest request) {
-        System.out.println("Login attempt for customerId: " + request.getCustomerId());
         boolean valid = userService.authenticateUser(request.getCustomerId(), request.getPassword());
-        System.out.println("Authentication result: " + valid);
-        
         Map<String,Object> response = new HashMap<>();
         response.put("userCreated", valid);
+        response.put("customerId", request.getCustomerId());
         
         if (valid) {
-            String token = jwtUtil.generateToken(request.getCustomerId());
-            System.out.println("Token generated: " + token.substring(0, 20) + "...");
-            response.put("token", token);
             return ResponseEntity.ok(response);
         } else {
-            System.out.println("Authentication failed for customerId: " + request.getCustomerId());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
