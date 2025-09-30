@@ -19,16 +19,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Verificar si hay un token almacenado al cargar la aplicación
     const token = localStorage.getItem('token');
-    const customerId = localStorage.getItem('customerId');
-    console.log('AuthContext - Checking stored auth:', { token: !!token, customerId });
-    
     if (token) {
       apiService.setAuthToken(token);
       setIsAuthenticated(true);
-      setUser({ customerId });
-      console.log('AuthContext - User authenticated from storage');
-    } else {
-      console.log('AuthContext - No token found, user not authenticated');
+      setUser({ customerId: localStorage.getItem('customerId') });
     }
     setLoading(false);
   }, []);
@@ -36,20 +30,21 @@ export const AuthProvider = ({ children }) => {
   const login = async (customerId, password) => {
     try {
       const response = await apiService.login(customerId, password);
-      console.log('Login response:', response.data);
+      console.log('Login response:', response);
+      console.log('Login response data:', response.data);
+      console.log('Login response status:', response.status);
       
       if (response.data && response.data.userCreated) {
         const token = response.data.token;
+        console.log('Token received:', token);
         if (token) {
           localStorage.setItem('token', token);
           localStorage.setItem('customerId', customerId);
           apiService.setAuthToken(token);
           setIsAuthenticated(true);
           setUser({ customerId });
-          console.log('AuthContext - Login successful, user authenticated:', { customerId, token: token.substring(0, 20) + '...' });
           return { success: true };
         } else {
-          console.log('AuthContext - No token received from server');
           return { success: false, message: 'Token no recibido del servidor' };
         }
       } else {
