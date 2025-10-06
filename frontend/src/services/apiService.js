@@ -13,8 +13,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('API Request interceptor - Token from localStorage:', token ? 'Present' : 'Missing');
+    console.log('API Request interceptor - URL:', config.url);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('API Request interceptor - Authorization header set');
+    } else {
+      console.log('API Request interceptor - No token found, request will be unauthorized');
     }
     return config;
   },
@@ -28,10 +33,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expirado o inválido
-      localStorage.removeItem('token');
-      localStorage.removeItem('customerId');
-      window.location.href = '/login';
+      console.log('Error 401 - Token inválido o expirado');
+      // Limpiar localStorage y redirigir solo si no estamos en login
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('customerId');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -42,8 +51,10 @@ const apiService = {
   setAuthToken: (token) => {
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.log('API Service - Token set in defaults headers:', token.substring(0, 20) + '...');
     } else {
       delete api.defaults.headers.common['Authorization'];
+      console.log('API Service - Token removed from defaults headers');
     }
   },
 
@@ -65,7 +76,7 @@ const apiService = {
     return api.post('/customer/createcustomer', customerData);
   },
 
-  // Servicios de pedidos (cuando estén disponibles)
+  // Servicios de pedidos a través del Gateway
   getOrders: (customerId) => {
     return api.get(`/order/findorderbycustomerid?customerid=${customerId}`);
   },

@@ -20,4 +20,4 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 
 jwt:
-  secret: "UnaClaveSuperSecretaLargaParaFirmarTokens123456"
+  secret: "UnaClaveSuperSecretaLargaParaFirmarTokensJWT123456789012345678901234567890"

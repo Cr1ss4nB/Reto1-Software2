@@ -6,30 +6,36 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-          routes:
-            - id: login-service
-              uri: lb://login-microservice
-              predicates:
-                - Path=/login/**
-            - id: user-service
-              uri: lb://user-microservice
-              predicates:
-                - Path=/user/**
-            - id: order-service
-              uri: lb://order-microservice
-              predicates:
-                - Path=/order/**
-  security:
-    user:
-      name: admin
-      password: admin
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Ruta para el servicio de login
+        - id: login-service
+          uri: lb://login-microservice
+          predicates:
+            - Path=/login/**
+          filters:
+            - RemoveRequestHeader=Cookie
 
+        # Ruta para el servicio de órdenes
+        - id: order-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/order/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+        # Ruta para el servicio de clientes (cuando esté disponible)
+        - id: customer-service
+          uri: lb://customer-microservice
+          predicates:
+            - Path=/customer/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+# Configuración de Eureka
 eureka:
   client:
     service-url:
@@ -37,5 +43,6 @@ eureka:
   instance:
     prefer-ip-address: true
 
+# Configuración JWT
 jwt:
   secret: "UnaClaveSuperSecretaLargaParaFirmarTokensJWT123456789012345678901234567890"
