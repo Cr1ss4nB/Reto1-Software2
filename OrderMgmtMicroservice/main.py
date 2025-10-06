@@ -1,23 +1,23 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import os
 
 from controller.order_controller import router as order_router
 from eureka import start_eureka_registration, stop_eureka_registration
 
 app = FastAPI(title="OrderMgmtMicroservice")
 
-# CORS
-origins = [
-    "http://localhost:3000",
-    "http://localhost:8080",
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if os.getenv("LOCAL_DEV_CORS", "0").lower() in ("1", "true", "yes"):
+    from fastapi.middleware.cors import CORSMiddleware  # import interno solo si se usa
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    print("[CORS] Activado localmente (LOCAL_DEV_CORS=1) solo para http://localhost:3000")
+else:
+    print("[CORS] No configurado aquí. Se espera que el Gateway maneje CORS.")
 
 app.include_router(order_router, prefix="/order")
 
