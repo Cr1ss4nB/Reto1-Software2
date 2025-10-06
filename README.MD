@@ -101,12 +101,9 @@ Cada documento mantiene: customerid, orderID (en caso de no especificarlo se asi
 
 Responsabilidades:
 - Crear instancia FastAPI.
-- CORS limitado a http://localhost:3000 y http://localhost:8080.
 - Registrar router de /order.
 - Exponer /health (usado por Eureka).
 - Invocar start_eureka_registration() en startup y stop_eureka_registration() en shutdown.
-
-
 
 ### eureka.py (integración Eureka)
 Responsabilidades:
@@ -117,30 +114,19 @@ Responsabilidades:
 Variables relevantes:
 - APP_NAME, EUREKA_SERVER, EUREKA_HOSTNAME, EUREKA_HEARTBEAT_INTERVAL, PORT.
 
-Capturas sugeridas:
-1. Función _build_instance_xml()
-2. Bloque INSTANCE_ID y FORCED_HOST
-3. Mensaje “[EUREKA] Heartbeat cada …”
-
 ### db.py
 Conexión a Mongo:
 - Crea AsyncIOMotorClient a mongodb://localhost:27017
 - Expone `db = client["OrderDB"]`.
 
-Captura sugerida: línea de creación de AsyncIOMotorClient.
-
 ### domain/order.py
-Modelo base (puede crecer con lógica de negocio futura).  
-Si se añaden invariantes (ej. estados permitidos), se implementarán aquí.
+Modelo base.
 
 ### dto/order_dto.py
 DTOs:
 - CreateOrderRequest: customerid, orderID opcional, status.
 - UpdateOrderStatusRequest: orderID, status.
 - OrderResponse: customerid, orderID, status.
-Decisión: usar `customerid` en minúsculas de forma consistente (alineado al enunciado).
-
-Captura sugerida: clase CreateOrderRequest.
 
 ### repository/order_repository.py
 Funciones async contra Mongo:
@@ -151,19 +137,11 @@ Funciones async contra Mongo:
 Uso de índices (opcional en mejora futura).  
 Se mantiene lógica mínima: no resuelve validaciones de estado (eso iría a service).
 
-Captura sugerida: método update_status.
-
 ### service/order_service.py
 Reglas de negocio:
 - generate orderID (UUID4) si falta.
 - Llama repository.
 - Normaliza retorno booleano (true cuando update modifica >=1 documento).
-
-Posible extensión:
-- Validar transición de estados (ej. PENDING → SHIPPED → DELIVERED).
-- Emitir eventos (ej. a una cola) post-creación.
-
-Captura sugerida: método create_order.
 
 ### controller/order_controller.py
 Define endpoints:
@@ -172,9 +150,7 @@ Define endpoints:
 - GET /order/findorderbycustomerid
 Respuestas simplificadas (banderas booleanas) para cumplir requerimiento exacto.
 
-Captura sugerida: definición del router y primer endpoint.
-
-## 6. Endpoints (contratos funcionales)
+## Endpoints
 1. POST /order/createorder  
    Body: { "customerid": "...", "status": "PENDING" }  
    Respuesta: { "orderCreated": true }
@@ -183,32 +159,6 @@ Captura sugerida: definición del router y primer endpoint.
    Respuesta: { "orderStatusUpdated": true }
 3. GET /order/findorderbycustomerid?customerid=...  
    Respuesta: [ { "customerid": "...", "orderID": "...", "status": "..." }, ... ]
-
-## 7. Variables de entorno relevantes
-| Variable | Descripción | Default |
-|----------|-------------|---------|
-| APP_NAME | Nombre de registro en Eureka | order-microservice |
-| EUREKA_SERVER | URL base Eureka | http://localhost:8761/eureka |
-| EUREKA_HOSTNAME | Hostname forzado en instancia | localhost |
-| EUREKA_HEARTBEAT_INTERVAL | Intervalo heartbeat (s) | 10 |
-| EUREKA_ENABLED | 1 habilita, 0 desactiva | 1 |
-| PORT | Puerto expuesto (usar 8082) | 8082 |
-| MONGO_URI (si se agrega) | Sobrescribir URI | (hardcoded en db.py actualmente) |
-
-
-## 10. Capturas sugeridas para documentación final
-| Captura | Ubicación | Explicación en documento |
-|---------|-----------|--------------------------|
-| C1 | Eureka UI mostrando ORDER-MICROSERVICE (LOCALHOST...) | Demuestra registro y discovery |
-| C2 | Consola uvicorn con línea “[EUREKA] Heartbeat...” | Evidencia heartbeats activos |
-| C3 | Resultado de /health en navegador | Health check operativo |
-| C4 | Salida de consulta en Mongo (db.Order.find()) | Persistencia en OrderDB.Order |
-| C5 | Código eureka.py (bloque INSTANCE_ID) | Forzado de hostname |
-| C6 | Código service/order_service.py (create_order) | Generación de orderID |
-| C7 | Código repository/order_repository.py (find_by_customer) | Acceso directo a Mongo |
-| C8 | Código controller/order_controller.py (rutas) | Contratos de endpoints |
-| C9 | dto/order_dto.py (CreateOrderRequest) | Validación de entrada |
-| C10 | main.py (CORS + include_router) | Integración global y CORS |
 
 ---
 
