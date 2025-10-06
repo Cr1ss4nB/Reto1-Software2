@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from controller.order_controller import router as order_router
 from eureka import start_eureka_registration, stop_eureka_registration

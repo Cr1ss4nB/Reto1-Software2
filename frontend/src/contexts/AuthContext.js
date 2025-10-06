@@ -12,33 +12,63 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Inicializar estado basado en localStorage
-    const token = localStorage.getItem('token');
-    const customerId = localStorage.getItem('customerId');
-    console.log('AuthContext initial state - token:', !!token, 'customerId:', customerId);
-    return !!token;
-  });
-  const [user, setUser] = useState(() => {
-    const customerId = localStorage.getItem('customerId');
-    return customerId ? { customerId } : null;
-  });
-  const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Solo verificar una vez al montar
-    const token = localStorage.getItem('token');
-    const customerId = localStorage.getItem('customerId');
-    console.log('AuthContext useEffect - Checking stored auth:', { token: !!token, customerId });
+    // Solo verificar autenticación al montar el componente una vez
+    if (initialized) return;
     
-    if (token && customerId) {
-      apiService.setAuthToken(token);
-      setIsAuthenticated(true);
-      setUser({ customerId });
-      console.log('AuthContext useEffect - User authenticated from storage');
-    }
-    setLoading(false);
-  }, []);
+    const initializeAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const customerId = localStorage.getItem('customerId');
+        
+        console.log('AuthContext useEffect - Checking stored auth:', { 
+          token: !!token, 
+          customerId,
+          tokenLength: token ? token.length : 0
+        });
+        
+        if (token && customerId) {
+          // Configurar el token en el servicio API
+          apiService.setAuthToken(token);
+          
+          // Verificar si el token es válido
+          const isValidToken = await apiService.verifyToken();
+          
+          if (isValidToken) {
+            setIsAuthenticated(true);
+            setUser({ customerId });
+            console.log('AuthContext useEffect - Token válido, usuario autenticado');
+          } else {
+            console.log('AuthContext useEffect - Token inválido, limpiando sesión');
+            // Token inválido, limpiar localStorage
+            localStorage.removeItem('token');
+            localStorage.removeItem('customerId');
+            apiService.setAuthToken(null);
+            setIsAuthenticated(false);
+            setUser(null);
+          }
+        } else {
+          console.log('AuthContext useEffect - No hay token almacenado');
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('AuthContext useEffect - Error inicializando auth:', error);
+        setIsAuthenticated(false);
+        setUser(null);
+      } finally {
+        setLoading(false);
+        setInitialized(true);
+      }
+    };
+
+    initializeAuth();
+  }, [initialized]);
 
   const login = async (customerId, password) => {
     try {
@@ -46,25 +76,28 @@ export const AuthProvider = ({ children }) => {
       const response = await apiService.login(customerId, password);
       console.log('LOGIN RESPONSE:', response.data);
       
-      if (response.data && response.data.userCreated && response.data.token) {
+      if (response.data && response.data.token) {
         const token = response.data.token;
-        console.log('LOGIN SUCCESS - Setting auth state');
+        console.log('LOGIN SUCCESS - Token received:', token.substring(0, 20) + '...');
         
         // Guardar en localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('customerId', customerId);
+        console.log('LOGIN - Token saved to localStorage:', localStorage.getItem('token') ? 'Success' : 'Failed');
         
         // Configurar API service
         apiService.setAuthToken(token);
+        console.log('LOGIN - API service token configured');
         
-        // Establecer estado
+        // Establecer estado inmediatamente sin verificación adicional
         setIsAuthenticated(true);
         setUser({ customerId });
+        setInitialized(true); // Marcar como inicializado para evitar re-verificación
         
         console.log('LOGIN COMPLETE - isAuthenticated:', true, 'user:', { customerId });
         return { success: true };
       } else {
-        console.log('LOGIN FAILED - Invalid response');
+        console.log('LOGIN FAILED - Invalid response:', response.data);
         return { success: false, message: 'Credenciales inválidas' };
       }
     } catch (error) {
@@ -95,6 +128,7 @@ export const AuthProvider = ({ children }) => {
     apiService.setAuthToken(null);
     setIsAuthenticated(false);
     setUser(null);
+    setInitialized(false); // Reset para permitir nueva verificación
   };
 
   const value = {
