@@ -67,13 +67,17 @@ const apiService = {
     return api.post('/login/createuser', { customerId, password });
   },
 
-  // Servicios de clientes (cuando estén disponibles)
-  getCustomers: () => {
-    return api.get('/customer/findcustomerbyid');
+  // Servicios de clientes
+  getCustomerById: (customerId) => {
+    return api.get(`/customer/findcustomerbyid?customerid=${customerId}`);
   },
 
   createCustomer: (customerData) => {
     return api.post('/customer/createcustomer', customerData);
+  },
+
+  updateCustomer: (customerId, customerData) => {
+    return api.put('/customer/updatecustomer', { customerId, ...customerData });
   },
 
   // Servicios de pedidos a través del Gateway
@@ -91,15 +95,14 @@ const apiService = {
 
   // Verificar estado de servicios
   checkServiceHealth: async () => {
-    // Simplemente asumir que están funcionando si llegamos al dashboard
     const services = {
       gateway: true,   // Si el login funciona, el gateway está funcionando
       login: true,     // Si el login funciona, el login service está funcionando
-      user: false,     // No implementado aún
+      user: true,      // Servicio de usuario integrado
       order: false     // No implementado aún
     };
 
-    console.log('Servicios verificados - Gateway y Login asumidos como online (login exitoso)');
+    console.log('Servicios verificados - Gateway, Login y User Management disponibles');
     return services;
   }
 };

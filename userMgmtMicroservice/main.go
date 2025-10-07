@@ -30,10 +30,8 @@ func main() {
 		log.Fatalf("auto migrate failed: %v", err)
 	}
 
-	// Eureka registration (if enabled)
-	if os.Getenv("EUREKA_ENABLED") == "1" {
-		go eureka.RegisterAndHeartbeat()
-	}
+	// Eureka registration (habilitado por defecto)
+	go eureka.RegisterAndHeartbeat()
 
 	r := gin.Default()
 
@@ -54,9 +52,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
-		if os.Getenv("EUREKA_ENABLED") == "1" {
-			eureka.Deregister()
-		}
+		eureka.Deregister()
 		os.Exit(0)
 	}()
 

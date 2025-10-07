@@ -27,9 +27,9 @@ spring:
           filters:
             - RemoveRequestHeader=Cookie
 
-        # Ruta para el servicio de clientes (cuando esté disponible)
-        - id: customer-service
-          uri: lb://customer-microservice
+        # Ruta para el servicio de gestión de usuarios
+        - id: user-mgmt-service
+          uri: lb://user-mgmt-service
           predicates:
             - Path=/customer/**
           filters:
