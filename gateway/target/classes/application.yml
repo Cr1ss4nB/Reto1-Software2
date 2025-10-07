@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Ruta para el servicio de login
+        - id: login-service
+          uri: lb://login-microservice
+          predicates:
+            - Path=/login/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+        # Ruta para el servicio de órdenes
+        - id: order-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/order/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+        # Ruta para el servicio de clientes (cuando esté disponible)
+        - id: customer-service
+          uri: lb://customer-microservice
+          predicates:
+            - Path=/customer/**
+          filters:
+            - RemoveRequestHeader=Cookie
+
+# Configuración de Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Configuración JWT
+jwt:
+  secret: "UnaClaveSuperSecretaLargaParaFirmarTokensJWT123456789012345678901234567890"
