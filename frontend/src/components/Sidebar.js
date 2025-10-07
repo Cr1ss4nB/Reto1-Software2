@@ -25,6 +25,17 @@ const Sidebar = () => {
       hasSubmenu: false
     },
     {
+      id: 'users',
+      title: 'Clientes',
+      icon: '●',
+      hasSubmenu: true,
+      submenu: [
+        { title: 'Buscar Cliente', path: '/users/search' },
+        { title: 'Editar Cliente', path: '/users/edit' },
+        { title: 'Crear Cliente', path: '/users/create' }
+      ]
+    },
+    {
       id: 'orders',
       title: 'Órdenes',
       icon: '●',

@@ -60,6 +60,11 @@ def _heartbeat() -> bool:
         r = requests.put(url, timeout=5)
         if r.status_code in (200, 204):
             return True
+        # Si Eureka devuelve 404 (p.ej., tras reiniciarse), intentamos re-registrar
+        if r.status_code == 404:
+            print("[EUREKA] Heartbeat 404 → re-registering")
+            ok = _register()
+            return ok
         print(f"[EUREKA] Heartbeat fallo status={r.status_code}")
         return False
     except Exception as e:

@@ -3,9 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Cr1ss4nB/Reto1-Software2/UserMgmtMicroservice/config"
 	"github.com/Cr1ss4nB/Reto1-Software2/UserMgmtMicroservice/eureka"
@@ -30,8 +33,33 @@ func main() {
 		log.Fatalf("auto migrate failed: %v", err)
 	}
 
-	// Eureka registration (habilitado por defecto)
-	go eureka.RegisterAndHeartbeat()
+	// Esperar a que Eureka esté disponible (mejor robustez al reiniciar Eureka)
+	go func() {
+		eurekaURL := os.Getenv("EUREKA_SERVER")
+		if strings.TrimSpace(eurekaURL) == "" {
+			eurekaURL = "http://localhost:8761/eureka/apps"
+		}
+		// Normalizar sin trailing slash para evitar 301s
+		eurekaURL = strings.TrimRight(eurekaURL, "/")
+
+		deadline := time.Now().Add(30 * time.Second)
+		for {
+			resp, err := http.Get(eurekaURL)
+			if err == nil && resp != nil && resp.StatusCode < 500 {
+				if resp.Body != nil {
+					_ = resp.Body.Close()
+				}
+				break
+			}
+			if time.Now().After(deadline) {
+				// Continuamos aunque no responda; el cliente de Eureka reintenta en heartbeats
+				break
+			}
+			time.Sleep(2 * time.Second)
+		}
+		// Registrar y comenzar heartbeats (con re-registro automático en 404)
+		eureka.RegisterAndHeartbeat()
+	}()
 
 	r := gin.Default()
 

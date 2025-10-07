@@ -29,7 +29,7 @@ spring:
 
         # Ruta para el servicio de gestión de usuarios
         - id: user-mgmt-service
-          uri: lb://user-mgmt-service
+          uri: http://localhost:8083
           predicates:
             - Path=/customer/**
           filters:

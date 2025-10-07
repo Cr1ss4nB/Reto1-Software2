@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import apiService from '../services/apiService';
 import { useAuth } from '../contexts/AuthContext';
+import ServiceStatusBars from './ServiceStatusBars';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -97,6 +98,9 @@ const Dashboard = () => {
           })}</span>
         </div>
       </div>
+
+      {/* Barras de estado de servicios */}
+      <ServiceStatusBars />
 
       <div className="stats-grid">
         <div className="stat-card">

@@ -33,14 +33,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      console.log('Error 401 - Token inválido o expirado');
-      // Limpiar localStorage y redirigir solo si no estamos en login
-      const currentPath = window.location.pathname;
-      if (currentPath !== '/login' && currentPath !== '/') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('customerId');
-        window.location.href = '/login';
-      }
+      console.log('Error 401 - Token inválido o expirado (no redirigimos automáticamente)');
+      // Dejar que la vista maneje el 401 y muestre un mensaje; evitamos redirección automática
     }
     return Promise.reject(error);
   }
@@ -77,7 +71,9 @@ const apiService = {
   },
 
   updateCustomer: (customerId, customerData) => {
-    return api.put('/customer/updatecustomer', { customerId, ...customerData });
+    // El backend espera `customerid` y campos en minúsculas
+    const payload = { customerid: customerId, ...customerData };
+    return api.put('/customer/updatecustomer', payload);
   },
 
   // Servicios de pedidos a través del Gateway
