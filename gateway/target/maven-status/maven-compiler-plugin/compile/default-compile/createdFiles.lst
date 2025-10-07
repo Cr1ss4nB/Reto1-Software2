@@ -1,0 +1,4 @@
+co\edu\uptc\gateway\config\SecurityConfig.class
+co\edu\uptc\gateway\filter\JwtAuthenticationFilter.class
+co\edu\uptc\gateway\GatewayApplication.class
+co\edu\uptc\gateway\config\JwtUtil.class
