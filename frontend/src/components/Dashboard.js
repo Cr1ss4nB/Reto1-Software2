@@ -1,150 +1,195 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [services, setServices] = useState({
-    gateway: false,
-    login: false,
-    user: false,
-    order: false
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+    totalCustomers: 0
   });
+  const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    console.log('Dashboard mounted, checking services...');
-    checkServices();
-  }, []);
+    const loadDashboardData = async () => {
+      try {
+        console.log('Dashboard - Loading data for user:', user?.customerId);
+        
+        if (!user?.customerId || user.customerId === 'undefined' || user.customerId.trim() === '') {
+          console.log('Dashboard - No valid customerId, using default data');
+          setStats({
+            totalOrders: 0,
+            pendingOrders: 0,
+            completedOrders: 0,
+            totalCustomers: 1
+          });
+          setRecentOrders([]);
+          setLoading(false);
+          return;
+        }
 
-  const checkServices = async () => {
-    console.log('Dashboard - Starting service health check...');
-    setLoading(true);
-    try {
-      const serviceStatus = await apiService.checkServiceHealth();
-      console.log('Dashboard - Service status received:', serviceStatus);
-      setServices(serviceStatus);
-    } catch (error) {
-      console.error('Dashboard - Error verificando servicios:', error);
-    } finally {
-      setLoading(false);
-      console.log('Dashboard - Service health check completed');
-    }
-  };
+        // Verificar token antes de hacer la llamada
+        const token = localStorage.getItem('token');
+        console.log('Dashboard - Token check:', token ? 'Present' : 'Missing');
+        
+        // Cargar datos reales de órdenes
+        const ordersResponse = await apiService.getOrders(user.customerId);
+        const orders = ordersResponse.data || [];
+        
+        setStats({
+          totalOrders: orders.length,
+          pendingOrders: orders.filter(o => o.status === 'PENDING').length,
+          completedOrders: orders.filter(o => o.status === 'DELIVERED').length,
+          totalCustomers: 1
+        });
+        
+        setRecentOrders(orders.slice(0, 5).map(order => ({
+          id: order.orderID,
+          customer: order.customerid,
+          status: order.status,
+          date: new Date().toISOString().split('T')[0]
+        })));
+        
+        console.log('Dashboard - Data loaded successfully');
+      } catch (error) {
+        console.error('Dashboard - Error loading data:', error);
+        // Datos por defecto si hay error
+        setStats({
+          totalOrders: 0,
+          pendingOrders: 0,
+          completedOrders: 0,
+          totalCustomers: 1
+        });
+        setRecentOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const getServiceStatus = (status) => {
-    return status ? 'online' : 'offline';
-  };
+    loadDashboardData();
+  }, [user?.customerId]);
 
-  const getServiceStatusText = (status) => {
-    return status ? 'En línea' : 'Fuera de línea';
-  };
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="loading-spinner"></div>
+        <p>Cargando dashboard...</p>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2>Dashboard del Sistema</h2>
-      <p>Bienvenido al sistema de gestión de pedidos, <strong>{user?.customerId}</strong></p>
-
-      <div className="dashboard-grid">
-        {/* Estado de Servicios */}
-        <div className="dashboard-card">
-          <h3>Estado de Servicios</h3>
-          {loading ? (
-            <p>Cargando estado de servicios...</p>
-          ) : (
-            <ul className="service-list">
-              <li>
-                <span>
-                  <span className={`status-indicator status-${getServiceStatus(services.gateway)}`}></span>
-                  API Gateway
-                </span>
-                <span>{getServiceStatusText(services.gateway)}</span>
-              </li>
-              <li>
-                <span>
-                  <span className={`status-indicator status-${getServiceStatus(services.login)}`}></span>
-                  Login Service
-                </span>
-                <span>{getServiceStatusText(services.login)}</span>
-              </li>
-              <li>
-                <span>
-                  <span className={`status-indicator status-${getServiceStatus(services.user)}`}></span>
-                  User Management
-                </span>
-                <span>{getServiceStatusText(services.user)}</span>
-              </li>
-              <li>
-                <span>
-                  <span className={`status-indicator status-${getServiceStatus(services.order)}`}></span>
-                  Order Management
-                </span>
-                <span>{getServiceStatusText(services.order)}</span>
-              </li>
-            </ul>
-          )}
-          <button className="btn btn-secondary" onClick={checkServices}>
-            Actualizar Estado
-          </button>
+    <div className="dashboard">
+      <div className="dashboard-header">
+        <div className="welcome-section">
+          <h1>Bienvenido, {user?.customerId}</h1>
+          <p>Panel de control del sistema de gestión de órdenes</p>
         </div>
-
-        {/* Información del Usuario */}
-        <div className="dashboard-card">
-          <h3>Información del Usuario</h3>
-          <p><strong>ID de Cliente:</strong> {user?.customerId}</p>
-          <p><strong>Estado:</strong> Autenticado</p>
-          <p><strong>Token JWT:</strong> Activo</p>
-        </div>
-
-        {/* Funcionalidades Disponibles */}
-        <div className="dashboard-card">
-          <h3>Funcionalidades Disponibles</h3>
-          <ul style={{ textAlign: 'left', paddingLeft: '20px' }}>
-            <li>✅ Autenticación de usuarios</li>
-            <li>✅ Gestión de sesiones JWT</li>
-            <li>⏳ Gestión de clientes (próximamente)</li>
-            <li>⏳ Gestión de pedidos (próximamente)</li>
-          </ul>
-        </div>
-
-        {/* Información Técnica */}
-        <div className="dashboard-card">
-          <h3>Información Técnica</h3>
-          <p><strong>Frontend:</strong> React 18</p>
-          <p><strong>Backend:</strong> Spring Boot 3.5.6</p>
-          <p><strong>Gateway:</strong> Spring Cloud Gateway</p>
-          <p><strong>Service Discovery:</strong> Eureka Server</p>
-          <p><strong>Autenticación:</strong> JWT Centralizado</p>
+        <div className="dashboard-date">
+          <span>{new Date().toLocaleDateString('es-ES', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          })}</span>
         </div>
       </div>
 
-      {/* Sección de Pruebas de API */}
-      <div className="card" style={{ marginTop: '30px' }}>
-        <h3>Pruebas de API</h3>
-        <p>Utiliza las herramientas de desarrollador del navegador para ver las peticiones HTTP.</p>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button 
-            className="btn" 
-            onClick={() => {
-              console.log('Probando autenticación...');
-              apiService.login('test123', 'password123')
-                .then(response => console.log('Login exitoso:', response.data))
-                .catch(error => console.error('Error en login:', error));
-            }}
-          >
-            Probar Login
-          </button>
-          <button 
-            className="btn btn-secondary" 
-            onClick={() => {
-              console.log('Verificando estado de servicios...');
-              apiService.checkServiceHealth()
-                .then(response => console.log('Estado de servicios:', response))
-                .catch(error => console.error('Error verificando servicios:', error));
-            }}
-          >
-            Verificar Servicios
-          </button>
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon orders-icon">●</div>
+          <div className="stat-content">
+            <div className="stat-number">{stats.totalOrders}</div>
+            <div className="stat-label">Total Órdenes</div>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon pending-icon">●</div>
+          <div className="stat-content">
+            <div className="stat-number">{stats.pendingOrders}</div>
+            <div className="stat-label">Pendientes</div>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon completed-icon">●</div>
+          <div className="stat-content">
+            <div className="stat-number">{stats.completedOrders}</div>
+            <div className="stat-label">Completadas</div>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon customers-icon">●</div>
+          <div className="stat-content">
+            <div className="stat-number">{stats.totalCustomers}</div>
+            <div className="stat-label">Clientes</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="dashboard-content">
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h2>Órdenes Recientes</h2>
+            <button className="btn btn-outline">Ver Todas</button>
+          </div>
+          <div className="orders-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID Orden</th>
+                  <th>Cliente</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentOrders.map((order) => (
+                  <tr key={order.id}>
+                    <td>{order.id}</td>
+                    <td>{order.customer}</td>
+                    <td>
+                      <span className={`status-badge ${order.status.toLowerCase()}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td>{order.date}</td>
+                    <td>
+                      <button className="btn btn-sm btn-outline">Ver</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="dashboard-section">
+          <div className="section-header">
+            <h2>Acciones Disponibles</h2>
+          </div>
+          <div className="quick-actions">
+            <button 
+              className="action-btn primary"
+              onClick={() => window.location.href = '/orders/create'}
+            >
+              <span className="action-icon">●</span>
+              <span>Crear Nueva Orden</span>
+            </button>
+            <button 
+              className="action-btn secondary"
+              onClick={() => window.location.href = '/orders/list'}
+            >
+              <span className="action-icon">●</span>
+              <span>Ver Mis Órdenes</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
